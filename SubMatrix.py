@@ -1,12 +1,13 @@
-
 # coding: utf-8
 
 import numpy as np
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import csr_matrix
-import scipy as sc
+import scipy
 import csv
 import copy
+
+# np.set_printoptions(precision=4, floatmode='fixed')
 
 def init_X0(len_A, p):
 
@@ -26,41 +27,136 @@ def Eig_matrix(A, X, p):
     return lmda, Q
 
 def Eig_matrix_2(A, B):
-    eig_val,eig_vec =  sc.linalg.eig(A,B)
+    eig_val,eig_vec =  scipy.linalg.eig(A,B)
     for i in range(len(eig_vec)): #正規化
         eig_vec [i] = eig_vec[i]/np.linalg.norm(eig_vec[i])
 
     return eig_val, eig_vec
 
+def Normalization_X(x, A):
+    # print ("Normalization_X >>")
+    # print (x.reshape(-1,1))
+    # print (A)
+    # print (x)
+    x_T = x.reshape(-1,1)
+    # print (x)
+    # print (x @ A @ x_T)
+    # print (np.sqrt((x_T @ A @ x)[0]))
+    # print (x/np.sqrt(x_T @ A @ x))
+    # print (np.sqrt((x @ A @ x_T)[0]))
+    # print (np.sqrt((x @ A @ x_T)[0]))
+    # print (x / np.sqrt((x @ A @ x_T)[0]))
+    return np.array(x / np.sqrt((x @ A @ x_T)[0]))
+
+
+# def __i(Normal_X, X, X_save, A, k):
+#     X_save[k] = Normal_X(X[:, k], A)
+
+
+def Gram_Schimidt(X, A):
+    X_Normal_Orthogonalization = copy.deepcopy(X.T)
+    p = len(X)
+
+    for k in range(p):
+        # AA = 
+        # AA = np.array([2,1.2,1.8])
+        # print ("AA >>")
+        # print (AA)
+        # for kk in range(3):
+        #     X_Normal_Orthogonalization[k][kk] = AA[kk]
+
+        X_Normal_Orthogonalization[k][:] = Normalization_X(X_Normal_Orthogonalization[k, :],A)
+
+        # print ("Normal > ")
+        # print (X_Normal_Orthogonalization)
+        for i in range(k+1, p):
+            # print ("vec > ")
+            # print (X_Normal_Orthogonalization[k][:])
+            # print ("A > ")
+            # print (A)
+            # print (X_Normal_Orthogonalization[:, k].T)
+
+            # print (X_Normal_Orthogonalization[i][:])
+            # print (X_Normal_Orthogonalization[k][:])
+            # print ((X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0])
+            # print (((X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0])  X_Normal_Orthogonalization[k][:])
+            X_Normal_Orthogonalization[i][:] = X_Normal_Orthogonalization[i][:] - \
+                (X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0] * X_Normal_Orthogonalization[k][:]
+        
+        print ("XX >>> ")
+        print (X_Normal_Orthogonalization[k][:])
+
+    # X_new = [Normalization_X(X[:, k],A) for k in range(len(X))]
+    return X_Normal_Orthogonalization.T
+
+# def Subspace(A, B, n):
+#     p = n + int(n/5)
+#     X0 = init_X0(len(A), p)
+
+#     I = np.eye(p)
+#     lmda_before = np.ones(p)
+#     SS_Flag = True
+#     _k = 0
+
+#     while SS_Flag:
+#         Z_ = np.dot(B, X0)
+
+#         Y = np.dot( np.linalg.inv(A), Z_)
+
+#         A_new = np.dot(np.dot(Y.T, A), Y)
+#         B_new = np.dot(np.dot(Y.T, B), Y)
+
+#         lmda, Q = Eig_matrix_2(A_new, B_new)
+
+#         X0 = np.dot(Y, Q)
+#         # lmda_error = np.sum(lmda_before - lmda)
+#         # if (lmda_error < 1e-10):
+#             # SS_Flag = False
+#         if (_k > 20):
+#             SS_Flag = False
+        
+#         _k += 1
+#         # lmda_before = copy.deepcopy(lmda)
+
+#         print ("Lmda >> ")
+#         print (lmda)
+
+#     return lmda
+
+
 def Subspace(A, B, n):
     p = n + int(n/5)
     X0 = init_X0(len(A), p)
+    Z_ = np.dot(B, X0)
     I = np.eye(p)
-    lmda_before = np.ones(p)
     SS_Flag = True
-    _k = 0
+    # print ("X0 >> ")
+    # print (X0)
+    # print ("Z_ >> ")
+    # print (Z_)
 
     while SS_Flag:
-        Z_ = np.dot(B, X0)
-        Y = np.dot( np.linalg.inv(A), Z_)
+        X_new = np.dot( np.linalg.inv(A), Z_)
+        # print ("X_new >> ", X_new)
+        Z_new = np.dot(B, X_new)
+        # print ("Z_new >> ", Z_new)
+        # ここから変かも
+        # X_new = np.dot(np.linalg.inv(Z_new).T, I)
+        # print ("Orthogonalization X_new >> ", X_new)
+        # print ("tasikame >> ")
+        # print (np.dot(X_new.T, Z_new))
+        # 直行化
+        X_new = copy.deepcopy(Gram_Schimidt(X_new, A))
+        Z_new = np.dot(A, X_new)
 
-        A_new = np.dot(np.dot(Y.T, A), Y)
-        B_new = np.dot(np.dot(Y.T, B), Y)
-
-        lmda, Q = Eig_matrix_2(A_new, B_new)
-
-        X0 = np.dot(Y, Q)
-        # lmda_error = np.sum(lmda_before - lmda)
-        # if (lmda_error < 1e-10):
-            # SS_Flag = False
-        if (_k > 20):
-            SS_Flag = False
-        
-        _k += 1
-        # lmda_before = copy.deepcopy(lmda)
-
-        print ("Lmda >> ")
+        lmda, Q = Eig_matrix(A, X_new, p)
+        Z_ = np.dot(Z_new, Q)
+        print ("Q >> ")
+        print (Q)
+        print ("lambda >> ")
         print (lmda)
+
+        a = input()
 
     return lmda
 
@@ -77,7 +173,12 @@ if __name__ == "__main__":
         [0, 0, 0, 1, 0],
         [0, 0, 0, 0, 1]]
 
-
+    C = [[1.0, 1.0,-1.0],
+        [1.0, -1.0,1.0],
+        [1.0, 2.0, 3.0]]
+    
+    # a = Gram_(np.array(C), np.eye(3))
+    # print (a)
     Lmda = Subspace(A, B, 6)
 
     print ("Lmda >> ")

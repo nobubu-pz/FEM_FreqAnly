@@ -7,8 +7,6 @@ import scipy
 import csv
 import copy
 
-# np.set_printoptions(precision=4, floatmode='fixed')
-
 def init_X0(len_A, p):
 
     n = len_A
@@ -17,7 +15,7 @@ def init_X0(len_A, p):
     B = np.tile(I, (int(n/p)+1, 1))
     X0 = np.delete(B, A, axis = 0)
 
-    return X0
+    return np.array(X0 ,dtype = "float64")
 
 def Eig_matrix(A, X, p):
     C = np.dot(np.dot(X.T, A), X)
@@ -34,23 +32,10 @@ def Eig_matrix_2(A, B):
     return eig_val, eig_vec
 
 def Normalization_X(x, A):
-    # print ("Normalization_X >>")
-    # print (x.reshape(-1,1))
-    # print (A)
-    # print (x)
+
     x_T = x.reshape(-1,1)
-    # print (x)
-    # print (x @ A @ x_T)
-    # print (np.sqrt((x_T @ A @ x)[0]))
-    # print (x/np.sqrt(x_T @ A @ x))
-    # print (np.sqrt((x @ A @ x_T)[0]))
-    # print (np.sqrt((x @ A @ x_T)[0]))
-    # print (x / np.sqrt((x @ A @ x_T)[0]))
+
     return np.array(x / np.sqrt((x @ A @ x_T)[0]))
-
-
-# def __i(Normal_X, X, X_save, A, k):
-#     X_save[k] = Normal_X(X[:, k], A)
 
 
 def Gram_Schimidt(X, A):
@@ -58,35 +43,13 @@ def Gram_Schimidt(X, A):
     p = len(X)
 
     for k in range(p):
-        # AA = 
-        # AA = np.array([2,1.2,1.8])
-        # print ("AA >>")
-        # print (AA)
-        # for kk in range(3):
-        #     X_Normal_Orthogonalization[k][kk] = AA[kk]
 
         X_Normal_Orthogonalization[k][:] = Normalization_X(X_Normal_Orthogonalization[k, :],A)
 
-        # print ("Normal > ")
-        # print (X_Normal_Orthogonalization)
         for i in range(k+1, p):
-            # print ("vec > ")
-            # print (X_Normal_Orthogonalization[k][:])
-            # print ("A > ")
-            # print (A)
-            # print (X_Normal_Orthogonalization[:, k].T)
-
-            # print (X_Normal_Orthogonalization[i][:])
-            # print (X_Normal_Orthogonalization[k][:])
-            # print ((X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0])
-            # print (((X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0])  X_Normal_Orthogonalization[k][:])
             X_Normal_Orthogonalization[i][:] = X_Normal_Orthogonalization[i][:] - \
                 (X_Normal_Orthogonalization[k][:] @ A @ X_Normal_Orthogonalization[i][:].reshape(-1,1))[0] * X_Normal_Orthogonalization[k][:]
         
-        print ("XX >>> ")
-        print (X_Normal_Orthogonalization[k][:])
-
-    # X_new = [Normalization_X(X[:, k],A) for k in range(len(X))]
     return X_Normal_Orthogonalization.T
 
 # def Subspace(A, B, n):
@@ -130,10 +93,9 @@ def Subspace(A, B, n):
     Z_ = np.dot(B, X0)
     I = np.eye(p)
     SS_Flag = True
-    # print ("X0 >> ")
-    # print (X0)
-    # print ("Z_ >> ")
-    # print (Z_)
+
+    XXX = Gram_Schimidt(X0, np.eye(len(A)))
+    print (XXX)
 
     while SS_Flag:
         X_new = np.dot( np.linalg.inv(A), Z_)
@@ -142,9 +104,7 @@ def Subspace(A, B, n):
         # print ("Z_new >> ", Z_new)
         # ここから変かも
         # X_new = np.dot(np.linalg.inv(Z_new).T, I)
-        # print ("Orthogonalization X_new >> ", X_new)
-        # print ("tasikame >> ")
-        # print (np.dot(X_new.T, Z_new))
+
         # 直行化
         X_new = copy.deepcopy(Gram_Schimidt(X_new, A))
         Z_new = np.dot(A, X_new)
